@@ -1,8 +1,6 @@
 //FLTK
 #include <FL/Fl.H>
 
-
-
 #include <iostream>
 #include <string>
 
@@ -19,17 +17,12 @@ using namespace std;
 int main() {
 	inputParser* inputPtr = inputParser::createInstance();
 	
-	ifstream file("C:/Users/broaddaysk/Desktop/ppm/testcommands2.txt");
-
+	ifstream file("C:/Users/broaddaysk/Desktop/ppm/testcommands.txt");
 
 	string rawInput;
 	while (getline(file, rawInput)) { //cin if console
 		inputPtr->parse(rawInput);
 	}
-
-
-
-
 	return 0;
 }
 
