@@ -149,17 +149,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="editor.cpp" />
     <ClCompile Include="image.cpp" />
-    <ClCompile Include="imageStack.cpp" />
+    <ClCompile Include="imagePtrVector.cpp" />
     <ClCompile Include="command.cpp" />
     <ClCompile Include="inputParser.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="editor.h" />
     <ClInclude Include="image.h" />
-    <ClInclude Include="imageStack.h" />
+    <ClInclude Include="imagePtrVector.h" />
     <ClInclude Include="command.h" />
     <ClInclude Include="inputParser.h" />
     <ClInclude Include="main.h" />

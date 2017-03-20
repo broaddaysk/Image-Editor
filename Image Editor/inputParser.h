@@ -3,15 +3,14 @@
 #include "command.h"
 #include <string>
 
-class inputParser {
+class InputParser { //parses input str into cmd/arg for Command::doCommand()
 public:
-	static inputParser* createInstance();
-	void parse(string consoleInput);
+	static InputParser* Instance();
+	void parse(const string &consoleInput, string &cmd, string &arg); //overload parse(string filePath)?
 
 protected:
-	inputParser();
+	InputParser();
 
 private:
-	static inputParser* instance;
-	Command* commandPtr;
+	static InputParser* sInstance;
 };

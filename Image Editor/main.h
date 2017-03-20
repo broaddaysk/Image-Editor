@@ -2,6 +2,8 @@
 
 //string filePathTemplate = "C:/Users/broaddaysk/Desktop/ppm/west_1.ppm";
 
+
+//FORMATTING FOR MAIN::DEBUG
 /*
 
 void addImage(string filePath);

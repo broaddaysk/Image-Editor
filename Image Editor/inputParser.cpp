@@ -1,21 +1,18 @@
 #include "inputParser.h"
 
-inputParser* inputParser::instance = 0;
+InputParser* InputParser::sInstance = 0;
 
-inputParser* inputParser::createInstance() {
-	if (instance == 0) {
-		instance = new inputParser;
+InputParser* InputParser::Instance() {
+	if (sInstance == 0) {
+		sInstance = new InputParser;
 	}
-	return instance;
+	return sInstance;
 }
 
-inputParser::inputParser() {
-	commandPtr = Command::createInstance();
-}
+InputParser::InputParser() {}
 
-void inputParser::parse(string consoleInput) {
+void InputParser::parse(const string &consoleInput, string &cmd, string &arg) {
 	size_t len = consoleInput.find("(");
-	string cmd = consoleInput.substr(0, len);
-	string arg = consoleInput.substr(len + 1, consoleInput.find(")") - len - 1);
-	commandPtr->doCommand(cmd, arg);
+	cmd = consoleInput.substr(0, len);
+	arg = consoleInput.substr(len + 1, consoleInput.find(")") - len - 1);
 }

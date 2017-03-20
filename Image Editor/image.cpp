@@ -6,7 +6,14 @@
 #include <sstream>
 #include <vector>
 
+#include <cstring>
+#include <algorithm>
+
 using namespace std;
+
+//#define MCOPY
+//#define COPY
+#define DEFAULT
 
 istream& operator >> (istream& in, RGB& rgb) {
 	in >> rgb.R;
@@ -22,123 +29,158 @@ ostream& operator<<(ostream& out, RGB& rgb) {
 	return out;
 }
 
-Image::Image(string strFile) {
-	string delims = "/.";
+Image::Image(const string &filePath) {
+	string delims = "//\\.";
 	vector<string> pathComponents;
-	int start = strFile.find_first_not_of(delims), end = strFile.find_first_of(delims, start);
+	int start = filePath.find_first_not_of(delims), end = filePath.find_first_of(delims, start);
 	while (start != string::npos) {
-		pathComponents.push_back(strFile.substr(start, end - start));
-		start = strFile.find_first_not_of(delims, end);
-		end = strFile.find_first_of(delims, start);
+		pathComponents.push_back(filePath.substr(start, end - start));
+		start = filePath.find_first_not_of(delims, end);
+		end = filePath.find_first_of(delims, start);
 	}
 
-	name = pathComponents[5];
+	mImageName = pathComponents[pathComponents.size()-2]; 
 
-	ifstream file(strFile);
+	ifstream file(filePath);
 	if (file.is_open()) {
 		string line;
 		for (int i = 0; i < 4; i++) {
 			getline(file, line);
-			if (i == 2) {
-				istringstream(line) >> numCol >> numRow;
+			if (i == 2) { //assuming typical PPM formatting
+				istringstream(line) >> mNumCol >> mNumRow;
 			}
 		}
 
-		rgbArray = new RGB*[numRow];
-		for (int i = 0; i < numRow; i++) {
-			rgbArray[i] = new RGB[numCol];
+		mRGBArray = new RGB*[mNumRow];
+		for (int i = 0; i < mNumRow; i++) {
+			mRGBArray[i] = new RGB[mNumCol];
 		}
 
 		RGB rgb;
-		int colIdx = 0, rowIdx = 0;
-		while (file >> rgb) {
-			rgbArray[rowIdx][colIdx] = rgb;
+		int intVal;
+		unsigned char chVal;
 
-			if (colIdx == (numCol - 1)) {
-				colIdx = 0;
-				rowIdx++;
-			}
-			else {
-				colIdx++;
+		for (int i = 0; i < mNumRow; i++) {
+			for (int j = 0; j < mNumCol; j++) {
+				for (int k = 0; k < 3; k++) {
+					file >> intVal;
+					chVal = static_cast<unsigned char>(intVal);
+					switch (k) {
+					case 0:rgb.R = chVal;
+						break;
+					case 1:rgb.G = chVal;
+						break;
+					default:rgb.B = chVal;
+						break;
+					}
+				}
+				mRGBArray[i][j] = rgb;
 			}
 		}
 	}
 }
 
-Image::Image(const Image* im) {
-	name = im->name;
-	numCol = im->numCol;
-	numRow = im->numRow;
-	
-	rgbArray = new RGB*[numRow];
-	for (int i = 0; i < numRow; i++) {
-		rgbArray[i] = new RGB[numCol];
+Image::Image(Image* im) {
+	mImageName = im->mImageName;
+	mNumCol = im->mNumCol;
+	mNumRow = im->mNumRow;
+
+#ifdef MCOPY
+	mRGBArray = new RGB*[mNumRow];															
+	for (int i = 0; i < mNumRow; i++) {
+		mRGBArray[i] = new RGB[mNumCol];
 	}
 	
-	for (int i = 0; i < numRow; i++) {
-		for (int j = 0; j < numCol; j++) {
-			rgbArray[i][j] = im->rgbArray[i][j];
+	memcpy(mRGBArray, im->getRGBArray(), mNumCol * mNumRow * sizeof *(im->getRGBArray()));
+#endif
+
+#ifdef COPY
+	/*
+	mRGBArray = new RGB*[mNumRow];
+	for (int i = 0; i < mNumRow; i++) {
+		mRGBArray[i] = new RGB[mNumCol];
+	}*/
+	copy(&(im->getRGBArray())[0][0], &(im->getRGBArray())[0][0] + mNumRow*mNumCol, &mRGBArray[0][0]);
+#endif
+
+#ifdef DEFAULT
+	mRGBArray = new RGB*[mNumRow];															
+	for (int i = 0; i < mNumRow; i++) {
+		mRGBArray[i] = new RGB[mNumCol];
+	}
+
+	for (int i = 0; i < mNumRow; i++) {
+		for (int j = 0; j < mNumCol; j++) {
+			mRGBArray[i][j] = im->mRGBArray[i][j];
 		}
 	}
+#endif
 }
 
 Image::~Image() {
-	for (int i = 0; i < numRow; i++) {
-		delete[] rgbArray[i];
+	for (int i = 0; i < mNumRow; i++) {
+		delete[] mRGBArray[i];
 	}
-	delete[] rgbArray;
+	delete[] mRGBArray;
 }
 
 string Image::getName() {
-	return name;
+	return mImageName;
 }
 
 int Image::getNumCol() {
-	return numCol;
+	return mNumCol;
 }
 
 int Image::getNumRow() {
-	return numRow;
+	return mNumRow;
 }
 
 RGB** Image::getRGBArray() {
-	return rgbArray;
+	return mRGBArray;
 }
 
 void Image::setRGBArray(RGB** newArray) {
-	rgbArray = newArray;
+	mRGBArray = newArray;
 }
 
-bool operator==(const Image& lhs, const Image& rhs) {
-	if (lhs.numCol != rhs.numCol || lhs.numRow != rhs.numRow) {
-		return 0;
+bool operator==(const Image& lhs, const Image& rhs) { //so no duplicate images are added to imagePtrVector
+	if (lhs.mNumCol != rhs.mNumCol || lhs.mNumRow != rhs.mNumRow) {
+		return false;
 	}
-	if ((sizeof(lhs.rgbArray)/sizeof(lhs.rgbArray[0])) == (sizeof(rhs.rgbArray) / sizeof(rhs.rgbArray[0]))) {
-		for (int i = 0; i < lhs.numRow; i++) {
-			for (int j = 0; j < lhs.numCol; j++) {
-				if (lhs.rgbArray[i][j].R != rhs.rgbArray[i][j].R || lhs.rgbArray[i][j].G != rhs.rgbArray[i][j].G || lhs.rgbArray[i][j].B != rhs.rgbArray[i][j].B) {
-					return 0;
+	if ((sizeof(lhs.mRGBArray)/sizeof(lhs.mRGBArray[0])) == (sizeof(rhs.mRGBArray) / sizeof(rhs.mRGBArray[0]))) {
+		for (int i = 0; i < lhs.mNumRow; i++) {
+			for (int j = 0; j < lhs.mNumCol; j++) {
+				if (lhs.mRGBArray[i][j].R != rhs.mRGBArray[i][j].R || lhs.mRGBArray[i][j].G != rhs.mRGBArray[i][j].G || lhs.mRGBArray[i][j].B != rhs.mRGBArray[i][j].B) {
+					return false;
 				}
 			}
 		}
 	}
-	return 1;
+	return true;
 }
 
-void Image::print(int row, int col) {
-	cout << rgbArray[row][col] << endl;
-}
-
-void Image::writeFile(string strFile) {
-	ofstream file(strFile);
+void Image::writeFile(const string &filePath) {
+	ofstream file(filePath);
 	file << "P3\n"
 		<< "# comment line\n"
-		<< numCol << " " << numRow << "\n"
+		<< mNumCol << " " << mNumRow << "\n"
 		<< 255 << "\n";
 
-	for (int i = 0; i < numRow; i++) {
-		for (int j = 0; j < numCol; j++) {
-			file << rgbArray[i][j];
+	for (int i = 0; i < mNumRow; i++) {
+		for (int j = 0; j < mNumCol; j++) {
+			int val;
+			for (int k = 0; k < 3; k++) {
+				switch (k) {
+				case 0:val = static_cast<int>(mRGBArray[i][j].R);
+					break;
+				case 1:val = static_cast<int>(mRGBArray[i][j].G);
+					break;
+				default:val = static_cast<int>(mRGBArray[i][j].B);
+					break;
+				}
+				file << val << endl;
+			}
 		}
 	}
 	file.close();
