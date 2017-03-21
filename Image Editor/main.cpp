@@ -15,20 +15,13 @@
 
 #include "inputParser.h"
 
-#define DEBUG
-//#define DEFAULT
+//#define DEBUG
+#define DEFAULT
 
 //for future reference: assert (esp for pointers and vars) used in debug, try/catch used in larger blocks
+//ifdef should be def in soln>properties>preprocessor def
 
 using namespace std;
-
-void updateImageDisplay() {											//is there a public constructor for fltk images that takes in an array?
-	Image* imagePtr = Command::Instance()->getCurrentImagePtr();
-	//how to cast int as char? and vice versa
-
-
-
-}
 
 void addCB(Fl_Widget* obj, void*) {	
 	Fl_Button* button = (Fl_Button*)obj;
@@ -52,11 +45,13 @@ void addCB(Fl_Widget* obj, void*) {
 
 	const char* chFilePath = fileChooser.filename();
 	string strfilePath = string(chFilePath);
-	Command::Instance()->addImage(strfilePath);
-	if (ImagePtrVector::Instance()->imageAdded()) { //check if image was added
-		string strName = ImagePtrVector::Instance()->getLastName();
-		const char* chName = strName.c_str();
-		((Fl_Hold_Browser*)(button->parent()->child(8)))->add(chName); //populate browser
+	if (!strfilePath.empty()) { //check if a ppm file was selected
+		Command::Instance()->addImage(strfilePath);
+		if (ImagePtrVector::Instance()->imageAdded()) { //check if image was actually added
+			string strName = ImagePtrVector::Instance()->getLastName();
+			const char* chName = strName.c_str();
+			((Fl_Hold_Browser*)(button->parent()->child(8)))->add(chName); //populate browser
+		}
 	}
 }
 
@@ -177,15 +172,7 @@ int main(int argc, char **argv) {
 		imageBrowser->callback((Fl_Callback*)browserCB);
 	editWindow->end();
 
-	Fl_Window* displayWindow = new Fl_Window(600, 600); //testing
-	displayWindow->begin();
-		Fl_Image* image = new Fl_Image(500, 500, 0);
-		image->draw(30, 50);
-
-	displayWindow->end();
-
 	editWindow->show(argc, argv);
-	displayWindow->show(argc, argv);
 	return Fl::run();
 #endif
 }
